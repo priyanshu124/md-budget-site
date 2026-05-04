@@ -108,8 +108,37 @@ export default function Header() {
           })}
         </nav>
 
-        {/* Right — FY2027 proposed budget badge */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Right — Dashboard link + FY2027 badge */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
+
+          {/* MBTSA Dashboard button */}
+          <a
+            href="https://grand-cat-7b0818.netlify.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#802cd7',
+              color: '#fff',
+              padding: '6px 14px',
+              borderRadius: 7,
+              fontSize: 12,
+              fontWeight: 700,
+              textDecoration: 'none',
+              letterSpacing: '0.02em',
+              fontFamily: 'var(--mono)',
+              whiteSpace: 'nowrap',
+              border: '1.5px solid #6321a5',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.background = '#6321a5';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.background = '#802cd7';
+            }}
+          >
+            Deep-Dive Dashboard ↗
+          </a>
+
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
             <div
               style={{

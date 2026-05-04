@@ -49,18 +49,19 @@ export default function HomePage() {
     <div className="page-enter" style={{ padding: "28px 28px 60px", maxWidth: 1400, margin: "0 auto" }}>
 
       {/* ── Hero ──────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 20 }}>
-        <div
-          style={{
-            fontFamily: "var(--mono)",
-            fontSize: 10,
-            color: "var(--nxt-tint)",
-            letterSpacing: "0.18em",
-            fontWeight: 700,
-            marginBottom: 8,
-            textTransform: "uppercase",
-          }}
-        >
+      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: "var(--mono)",
+              fontSize: 10,
+              color: "var(--nxt-tint)",
+              letterSpacing: "0.18em",
+              fontWeight: 700,
+              marginBottom: 8,
+              textTransform: "uppercase",
+            }}
+          >
           Maryland Budget Intelligence System · MBIS
         </div>
         <h2
@@ -90,6 +91,60 @@ export default function HomePage() {
           proposed $70.8B operating budget goes, how the $1.5B shortfall was closed, and what&apos;s ahead for
           every agency.
         </p>
+        </div>  {/* closes left side */}
+        
+        {/* Deep Dive Dashboard CTA — top right */}
+        <a
+          href="https://grand-cat-7b0818.netlify.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 6,
+            background: '#f3ecfd',
+            border: '1px solid #802cd7',
+            borderRadius: 10,
+            padding: '12px 16px',
+            textDecoration: 'none',
+            minWidth: 220,
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.background = '#ede0fc';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.background = '#f3ecfd';
+          }}
+        >
+          
+          <div style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: 14,
+            fontWeight: 800,
+            color: '#211030',
+            lineHeight: 1.2,
+          }}>
+            Explore the Deep-Dive Dashboard
+          </div>
+          <div style={{ fontSize: 10, color: '#7c6a9a' }}>
+            FY2017–FY2027 · 80+ agencies · Trend · Variance · IT spend · MFR 
+          </div>
+          <div style={{
+            background: '#802cd7',
+            color: '#fff',
+            fontSize: 10,
+            fontWeight: 700,
+            padding: '5px 12px',
+            borderRadius: 5,
+            fontFamily: 'var(--mono)',
+            letterSpacing: '0.04em',
+            marginTop: 2,
+          }}>
+            Open Deep-Dive Dashboard ↗
+          </div>
+        </a>
       </div>
 
       {/* ── Scrolling ticker ──────────────────────────────────── */}
