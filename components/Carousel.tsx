@@ -448,6 +448,21 @@ export default function Carousel() {
                 <div style={{ height: 860 }}>
                   {s.viz}
                 </div>
+                {/* Citations below full-width slide — no sidebar available */}
+                <div style={{ fontFamily: "Georgia,serif", background: "#FAF6EE", borderTop: "3px double #0A0A0A", padding: "14px 18px 12px" }}>
+                  <div style={{ fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "2px", color: "#8A1538", fontWeight: 700, marginBottom: 8, textTransform: "uppercase" as const }}>
+                    {s.citations.length > 1 ? "SOURCES — Click any tile to open the PDF at the correct page" : "SOURCE — Click to open the PDF at the correct page"}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" as const, gap: 5 }}>
+                    {s.citations.map((c, idx) => (
+                      <a key={idx} href={c.url} target="_blank" rel="noopener noreferrer"
+                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 13px", background: "#fff", color: "#1a1a1a", border: "1px solid #1a1a1a", textDecoration: "none", fontFamily: "var(--mono)", fontSize: 11, fontWeight: 700 }}>
+                        <span>📄 {c.label}</span>
+                        <span style={{ opacity: 0.65, marginLeft: 12 }}>↗</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
               /* Two-column: chart + commentary sidebar */
