@@ -22,16 +22,6 @@
   .card{background:#FAF6EE;padding:14px 18px 4px;border:1px solid rgba(0,0,0,0.06)}
   .card-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;
     color:#1a1a1a;font-weight:700;margin-bottom:6px}
-  .priorities-wrap{border-top:2px solid #0A0A0A;padding-top:16px;margin-bottom:24px}
-  .priorities-wrap h3{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;
-    color:#1a1a1a;font-weight:700;margin-bottom:14px}
-  .priorities{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-  .priority{display:flex;gap:12px;align-items:flex-start}
-  .priority .icon-box{width:42px;height:42px;border-radius:50%;background:#EAAA00;
-    display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#8A1538;
-    font-size:20px;font-weight:900;border:1.5px solid #8A1538}
-  .priority .body h4{font-size:14px;font-weight:800;margin-bottom:4px}
-  .priority .body p{font-size:11.5px;color:#555;line-height:1.4}
   .sources{border-top:3px double #0A0A0A;padding-top:18px;margin-top:18px}
   .sources h3{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;
     color:#8A1538;font-weight:700;margin-bottom:12px}
@@ -71,10 +61,6 @@
   </div>
 </div>
 
-<div class="priorities-wrap">
-  <h3>STRATEGIC FISCAL PRIORITIES &mdash; FY <span id="yr-prio">2026</span></h3>
-  <div class="priorities" id="priorities"></div>
-</div>
 
 <div class="sources">
   <h3>SOURCES &mdash; Click any year to open the PDF at the correct page</h3>
@@ -279,30 +265,13 @@ function renderDonut(){
   Plotly.react('donut-chart', traces, layout, {responsive:true, displayModeBar:false});
 }
 
-function renderPriorities(){
-  const d = DATA[currentYear];
-  const wrap = document.getElementById('priorities');
-  wrap.innerHTML = '';
-  d.priorities.forEach((p,i)=>{
-    const div = document.createElement('div');
-    div.className = 'priority fade-in';
-    div.style.animationDelay = (i*0.08)+'s';
-    div.innerHTML =
-      '<div class="icon-box">'+p[0]+'</div>'+
-      '<div class="body"><h4>'+p[1]+'</h4><p>'+p[2]+'</p></div>';
-    wrap.appendChild(div);
-  });
-}
-
 function renderAll(){
   document.getElementById('yr-title').textContent = currentYear;
   document.getElementById('yr-desc').textContent  = currentYear;
   document.getElementById('yr-donut').textContent = currentYear;
-  document.getElementById('yr-prio').textContent  = currentYear;
   buildPills();
   renderLine();
   renderDonut();
-  renderPriorities();
   buildCitations();
 }
 

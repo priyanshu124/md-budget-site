@@ -17,32 +17,6 @@ const TICKER = [
   "Gap-closing Mix: Cuts · Transfers · Bond swaps",
 ];
 
-const INSIGHT_CARDS = [
-  {
-    tag: "KEY FINDING",
-    title: "The Health Spiral",
-    body: "Maryland's Dept. of Health grew 84% over 10 years — now consuming 37% of the entire state budget. MDH drove $2.25B of $2.9B in emergency deficiency appropriations in FY2025 alone.",
-    href: "#",
-    color: "var(--red)",
-    icon: "🏥",
-  },
-  {
-    tag: "RISK FACTOR",
-    title: "The Federal Cliff",
-    body: "Maryland receives $19.4B in federal funds annually — 33% of the entire budget. DHS is 79% federally funded, MDH 55%. With reserves at $132M, any federal cut creates an immediate service delivery crisis.",
-    href: "#",
-    color: "var(--amber)",
-    icon: "⚠️",
-  },
-  {
-    tag: "MANDATE",
-    title: "The Blueprint Bind",
-    body: "The Blueprint for Maryland's Future legally mandates education spending to grow from $12.9B to $18.3B by FY2030 — a $5.4B increase — while the state simultaneously faces a $2.7B structural deficit.",
-    href: "/methodology",
-    color: "var(--nxt-purple)",
-    icon: "📚",
-  },
-];
 
 export default function HomePage() {
   return (
@@ -129,70 +103,6 @@ export default function HomePage() {
       {/* ── KPI cards ─────────────────────────────────────────── */}
       <KpiRow />
 
-      {/* ── Insight cards ─────────────────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 14,
-          marginBottom: 30,
-        }}
-      >
-        {INSIGHT_CARDS.map((card) => (
-          <a
-            key={card.tag}
-            href={card.href}
-            style={{
-              textDecoration: "none",
-              background: "#fff",
-              border: "1px solid var(--line)",
-              borderTop: `3px solid ${card.color}`,
-              borderRadius: 10,
-              padding: "18px 20px 16px",
-              display: "block",
-              transition: "transform 0.2s, box-shadow 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLAnchorElement;
-              el.style.transform = "translateY(-3px)";
-              el.style.boxShadow = `0 8px 24px ${card.color}28`;
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLAnchorElement;
-              el.style.transform = "translateY(0)";
-              el.style.boxShadow = "none";
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 18 }}>{card.icon}</span>
-              <div
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 9,
-                  letterSpacing: "0.15em",
-                  color: card.color,
-                  fontWeight: 700,
-                }}
-              >
-                {card.tag}
-              </div>
-            </div>
-            <div
-              style={{
-                fontFamily: "Georgia, serif",
-                fontSize: 18,
-                fontWeight: 800,
-                color: "var(--nxt-deep)",
-                marginBottom: 8,
-                lineHeight: 1.2,
-              }}
-            >
-              {card.title}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--text-soft)", lineHeight: 1.6 }}>{card.body}</div>
-          </a>
-        ))}
-      </div>
 
       {/* ── Carousel section header ────────────────────────────── */}
       <div
