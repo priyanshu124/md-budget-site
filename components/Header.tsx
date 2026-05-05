@@ -138,30 +138,6 @@ export default function Header() {
             Deep-Dive Dashboard ↗
           </a>
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
-            <div
-              style={{
-                fontFamily: "Georgia, serif",
-                fontSize: 16,
-                fontWeight: 900,
-                color: "var(--nxt-deep)",
-                letterSpacing: "-0.3px",
-              }}
-            >
-              $70.8B
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--mono)",
-                fontSize: 8,
-                color: "var(--text-mute)",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-              }}
-            >
-              FY2027 Proposed · Operating Budget
-            </div>
-          </div>
         </div>
       </div>
 
