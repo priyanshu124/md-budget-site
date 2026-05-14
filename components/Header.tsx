@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   { label: "Home",         href: "/" },
+  { label: "Deep-Dive",    href: "/deep-dive/budget-office" },
   { label: "Methodology",  href: "/methodology" },
   { label: "Guardrails",   href: "/guardrails" },
 ];
@@ -71,7 +72,7 @@ export default function Header() {
 
         <nav style={{ display: "flex", gap: 2, marginLeft: 24 }}>
           {NAV.map((item) => {
-            const active = path === item.href || (item.href !== "/" && path.startsWith(item.href));
+            const active = path === item.href || (item.href !== "/" && path.startsWith(item.href)) || (item.href.startsWith("/deep-dive") && path.startsWith("/deep-dive"));
             return (
               <Link
                 key={item.href}
@@ -107,35 +108,21 @@ export default function Header() {
           })}
         </nav>
 
-        {/* Right — Dashboard link */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-
-          {/* Deep-Dive Dashboard button */}
-          <a
-            href="/deep-dive/budget-office"
+          <span
             style={{
-              background: '#802cd7',
-              color: '#fff',
-              padding: '6px 14px',
-              borderRadius: 7,
-              fontSize: 12,
+              background: "var(--nxt-pink)",
+              color: "var(--nxt-deep)",
+              padding: "4px 10px",
+              borderRadius: 6,
+              fontSize: 10,
               fontWeight: 700,
-              textDecoration: 'none',
-              letterSpacing: '0.02em',
-              fontFamily: 'var(--mono)',
-              whiteSpace: 'nowrap',
-              border: '1.5px solid #6321a5',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background = '#6321a5';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.background = '#802cd7';
+              fontFamily: "var(--mono)",
+              letterSpacing: "0.04em",
             }}
           >
-            Deep-Dive Dashboard
-          </a>
-
+            FY2027
+          </span>
         </div>
       </div>
 
