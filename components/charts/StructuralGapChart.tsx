@@ -3,24 +3,40 @@ import dynamic from "next/dynamic";
 import ChartFrame from "./ChartFrame";
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
+// ACFR 2025 · Statistical Section · pp.231-233 (PDF p.247)
+// Changes in Fund Balances, Governmental Funds, Last Ten Fiscal Years (audited)
 const yrs = ["FY2016","FY2017","FY2018","FY2019","FY2020","FY2021","FY2022","FY2023","FY2024","FY2025"];
-const rev = [37.2, 38.5, 40.1, 41.8, 44.5, 53.6, 58.3, 55.9, 57.2, 57.1];
-const exp = [36.1, 37.8, 39.0, 41.2, 42.6, 50.2, 55.4, 54.8, 55.9, 59.8];
+const rev = [33.8, 34.8, 35.7, 38.2, 40.4, 48.3, 56.7, 53.0, 55.6, 55.4];
+const exp = [36.2, 38.1, 38.4, 40.1, 43.0, 48.4, 53.9, 54.5, 57.8, 62.1];
 
-// Projected: FY2023→FY2025 slope extrapolated
-const projYrs = ["FY2025","FY2026","FY2027","FY2028"];
-const projRev = [57.1, 57.7, 58.3, 58.9];
-const projExp = [59.8, 62.3, 64.8, 67.3];
+// Linear regression slope (numpy.polyfit deg 1) on FY2023→FY2025
+function slopeFromLastThree(values: number[]): number {
+  const x = [2023, 2024, 2025];
+  const y = values.slice(-3);
+  const mx = (x[0] + x[1] + x[2]) / 3;
+  const my = (y[0] + y[1] + y[2]) / 3;
+  const num = (x[0]-mx)*(y[0]-my) + (x[1]-mx)*(y[1]-my) + (x[2]-mx)*(y[2]-my);
+  const den = (x[0]-mx)**2 + (x[1]-mx)**2 + (x[2]-mx)**2;
+  return num / den;
+}
+const revSlope = slopeFromLastThree(rev);  // 1.2
+const expSlope = slopeFromLastThree(exp);  // 3.8
 
-const gap = yrs.map((_, i) => rev[i] - exp[i]);
-const projGap = projYrs.map((_, i) => projRev[i] - projExp[i]);
+// Project FY2025 → FY2030 along the slope
+const projYrs = ["FY2025","FY2026","FY2027","FY2028","FY2029","FY2030"];
+const projRev = projYrs.map((_, i) => +(rev[rev.length - 1] + revSlope * i).toFixed(1));
+const projExp = projYrs.map((_, i) => +(exp[exp.length - 1] + expSlope * i).toFixed(1));
+
+const gap = yrs.map((_, i) => +(rev[i] - exp[i]).toFixed(1));
+const projGap = projYrs.map((_, i) => +(projRev[i] - projExp[i]).toFixed(1));
+const finalGap = projGap[projGap.length - 1];  // FY2030
 
 export default function StructuralGapChart() {
   return (
     <ChartFrame
-      title="Spending Is Growing 4x Faster Than Revenue"
-      deck="Post-ARPA: expenditures +$2.5B/yr vs. revenue +$0.6B/yr — gap projected at −$8.4B by FY2028"
-      source="ACFR 2025 · p.165 | Revenue & Expenditure 10-Year Table (audited) | Projection: FY2023–2025 slope"
+      title={`Spending Is Growing ${(expSlope / revSlope).toFixed(1)}x Faster Than Revenue`}
+      deck={`Post-ARPA: expenditures +$${expSlope.toFixed(1)}B/yr vs. revenue +$${revSlope.toFixed(1)}B/yr; gap projected at -$${Math.abs(finalGap).toFixed(1)}B by FY2030`}
+      source="ACFR 2025 · Statistical Section · pp.231-233 (PDF p.247) | Changes in Fund Balances, Governmental Funds, Last Ten Fiscal Years (audited) | Projection: FY2023-2025 slope extended to FY2030"
     >
       <Plot
         data={[
@@ -99,8 +115,8 @@ export default function StructuralGapChart() {
               yanchor: "bottom",
             },
             {
-              x: "FY2025", y: 59.8,
-              text: "Gap: −$2.7B",
+              x: "FY2025", y: exp[exp.length - 1],
+              text: `Gap: -$${Math.abs(gap[gap.length - 1]).toFixed(1)}B`,
               showarrow: true,
               arrowhead: 2,
               arrowcolor: "#C41230",
@@ -108,8 +124,8 @@ export default function StructuralGapChart() {
               ax: -60, ay: -20,
             },
             {
-              x: "FY2028", y: 67.3,
-              text: "Projected −$8.4B",
+              x: "FY2030", y: projExp[projExp.length - 1],
+              text: `Projected -$${Math.abs(finalGap).toFixed(1)}B`,
               showarrow: true,
               arrowhead: 2,
               arrowcolor: "#C41230",

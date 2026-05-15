@@ -42,10 +42,37 @@ const AGENCY_COLORS = [
   "#AD1457","#E65100","#4A148C","#263238","#2E7D32",
   "#558B2F","#6A1B9A","#01579B",
 ];
+const PROG_PALETTE = [
+  "#B71C1C","#1A237E","#1B5E20","#880E4F","#006064",
+  "#F57F17","#4527A0","#37474F","#33691E","#3E2723",
+  "#0D47A1","#4A148C","#E65100","#1B5E20","#263238",
+  "#6A1B9A","#AD1457","#00695C","#558B2F","#2E7D32",
+];
 
 /* ── CSV row types ──────────────────────────────────────────── */
 interface RevRow { year: number; category: string; gf: number; sf: number; ff: number; }
 interface AgenRow { year: number; agency: string; gf: number; sf: number; ff: number; total: number; }
+type FundKey = "gf" | "sf" | "ff";
+
+interface ProgEntry { count: number; names: string[]; vals: number[]; total: number; }
+type ProgDrilldowns = Record<string, Record<string, ProgEntry>>;
+
+interface SankeySpec {
+  labels: string[];
+  colors: string[];
+  src: number[];
+  tgt: number[];
+  val: number[];
+  lc: string[];
+  ll: string[];
+  prog_count?: number;
+}
+
+interface OverviewExtras {
+  revRows: RevRow[];
+  agencyFunds: Record<string, { gf: number; sf: number; ff: number }>;
+  agencies: string[];
+}
 
 function parseCsv<T>(text: string): T[] {
   const lines = text.trim().split("\n");
@@ -69,88 +96,7 @@ function h2r(hex: string, alphaByte: string): string {
   return `rgba(${r},${g},${b},${(parseInt(alphaByte, 16) / 255).toFixed(2)})`;
 }
 
-function assignAgency(name: string, budget: number): string | null {
-  const p = name.toLowerCase().trim();
-  if ([
-    "medical care provider","medicaid behavioral health","reinsurance program",
-    "maryland children's health","family health and chronic",
-    "infectious disease and environmental","health services cost review",
-    "spring grove hospital","springfield hospital","clifton t. perkins",
-    "thomas b. finan","eastern shore hospital","maryland health care commission",
-    "community services for medicaid","maryland community health resources",
-    "office of preparedness","core public health",
-    "benefits management and provider","maryland health benefit exchange",
-    "office of enterprise technology - medicaid","office of health care quality",
-    "health professional boards","mdh hospital","office of population health",
-    "deputy secretary for health care financing","medicaid fraud control",
-    "behavioral health administration","md behavioral health",
-    "office of the inspector general for health","laboratory services",
-  ].some(k => p.includes(k))) return "MD Dept of Health";
-  if (p === "community services" && budget > 1_000_000_000) return "MD Dept of Health";
-  if ([
-    "state share of foundation","compensatory education",
-    "aid for local employee fringe","students with disabilities",
-    "limited english proficient","food services program",
-    "concentration of poverty","county and municipality funds",
-    "educationally deprived","assistance to state for educating",
-    "disparity grants","education effort adjustment","educational excellence",
-    "prekindergarten","supplemental public school construction",
-    "teacher development","state superintendent","division of early childhood",
-    "blueprint for maryland","guaranteed tax base","aid to libraries",
-    "non-public school health","local law enforcement grants",
-    "aid to community colleges - fringe",
-  ].some(k => p.includes(k))) return "Aid To Education";
-  if ([
-    "support for state operated institutions of higher education",
-    "senator john a. cade funding formula","joseph a. sellinger formula",
-    "aid to community colleges",
-  ].some(k => p.includes(k))) return "Higher Education (Other)";
-  if ([
-    "state system construction","bus operations","washington metropolitan area transit",
-    "port facilities and capital","port operations","rail operations","airport operations",
-    "airport facilities","motor vehicle operations","transit administration",
-    "state system maintenance","washington metropolitan area transit-capital",
-  ].some(k => p.includes(k))) return "Transportation (MDOT)";
-  if ((p === "transportation" || p === "facilities and capital equipment") && budget > 300_000_000)
-    return "Transportation (MDOT)";
-  if ([
-    "assistance payments","child care assistance","foster care maintenance",
-    "office of home energy","child welfare services","local family investment",
-    "rental services programs","maryland office for refugees",
-    "child support administration","adult services","office of unemployment insurance",
-    "division of rehabilitation","division of paid leave","veterans home program",
-  ].some(k => p.includes(k))) return "Dept of Human Services";
-  if (p === "community services" && budget < 700_000_000) return "Dept of Human Services";
-  if ([
-    "correctional institution","correctional center","correctional facility",
-    "correctional training","correctional enterprises","maryland correctional",
-    "metropolitan transition","dorsey run","patuxent institution",
-    "chesapeake detention","roxbury correctional","north branch correctional",
-    "western correctional","jessup correctional","eastern correctional",
-    "parole and probation","juvenile services","adult corrections",
-    "field operations bureau","criminal investigation bureau",
-    "support services bureau","district operations","state aid for police protection",
-    "baltimore central booking","baltimore city correctional","central maryland correctional",
-    "facility operations administration","general administration and hearings",
-    "maryland department of emergency management","local law enforcement",
-  ].some(k => p.includes(k))) return "Public Safety & Corrections";
-  if ([
-    "clerks of the circuit court","administrative office of the courts",
-    "circuit court judges","judicial information systems",
-    "supreme court of maryland","appellate court of maryland",
-  ].some(k => p.includes(k))) return "Judiciary";
-  if ([
-    "redemption and interest on state bonds","debt service requirements",
-  ].some(k => p.includes(k))) return "State Reserve Fund";
-  if ([
-    "water quality revolving","drinking water revolving","renewable and clean energy",
-    "watershed and climate","water and science administration",
-    "outdoor recreation land","bay restoration","chesapeake","natural resources",
-  ].some(k => p.includes(k))) return "Natural Resources";
-  return null;
-}
-
-function buildOverview(year: number, dfRev: RevRow[], dfAgen: AgenRow[]) {
+function buildOverview(year: number, dfRev: RevRow[], dfAgen: AgenRow[]): SankeySpec & OverviewExtras {
   const rv = dfRev.filter(r => r.year === year);
   const ag = dfAgen.filter(r => r.year === year);
 
@@ -179,7 +125,6 @@ function buildOverview(year: number, dfRev: RevRow[], dfAgen: AgenRow[]) {
   const topList = TOP_AGENCIES
     .filter(a => agenTop[a])
     .map(a => ({ name: a, gf: agenTop[a][0], sf: agenTop[a][1], ff: agenTop[a][2] }));
-  const N_ag = topList.length;
 
   const fi_off = N_rev;
   const ag_off = N_rev + 3;
@@ -260,14 +205,112 @@ function buildOverview(year: number, dfRev: RevRow[], dfAgen: AgenRow[]) {
     }
   }
 
+  // Drill-down extras: per-agency fund actuals (scaled to FY targets, like fund-to-agency links)
+  const agencyFunds: Record<string, { gf: number; sf: number; ff: number }> = {};
+  topList.forEach((a2, ai) => {
+    void ai;
+    agencyFunds[a2.name] = {
+      gf: Math.round(a2.gf * sc_a[idx_gf]),
+      sf: Math.round(a2.sf * sc_a[idx_sf]),
+      ff: Math.round(a2.ff * sc_a[idx_ff]),
+    };
+  });
+
   return {
     labels: allLabels, colors: allColors,
     src: osrc, tgt: otgt, val: oval, lc: olc, ll: oll,
+    revRows, agencyFunds,
     agencies: topList.map(t => t.name),
   };
 }
 
-/* ── HTML template (self-contained Plotly page) ─────────────── */
+/* ── Drill-down: Revenue → Fund → [Agency] → Top 20 Programs ─ */
+function buildDrilldown(
+  year: number,
+  agency: string,
+  ov: SankeySpec & OverviewExtras,
+  drills: ProgDrilldowns,
+): SankeySpec | null {
+  const progs = drills[String(year)]?.[agency];
+  if (!progs) return null;
+  const agencyFunds = ov.agencyFunds[agency];
+  if (!agencyFunds) return null;
+  const agencyTotal = agencyFunds.gf + agencyFunds.sf + agencyFunds.ff;
+  if (agencyTotal === 0) return null;
+
+  const N_rev = ov.revRows.length;
+  const idx_gf = N_rev, idx_sf = N_rev + 1, idx_ff = N_rev + 2;
+  const idx_ag = N_rev + 3;
+  const prog_start = N_rev + 4;
+  const N_prog = progs.count;
+
+  const labels = [
+    ...ov.revRows.map(r => r.category),
+    ...FUND_NODES,
+    agency,
+    ...progs.names,
+  ];
+  const colors = [
+    ...ov.revRows.map((_, i) => h2r(REV_COLORS[i % REV_COLORS.length], "CC")),
+    ...FUND_NODES.map(f => FUND_COLORS[f]),
+    "#0A0A0A",
+    ...Array.from({ length: N_prog }, (_, i) => PROG_PALETTE[i % PROG_PALETTE.length]),
+  ];
+
+  const fundToAg: Record<number, number> = {
+    [idx_gf]: agencyFunds.gf,
+    [idx_sf]: agencyFunds.sf,
+    [idx_ff]: agencyFunds.ff,
+  };
+  const fundTotals = FUND_TOTALS[year];
+  const fkey: Record<number, FundKey> = { [idx_gf]: "gf", [idx_sf]: "sf", [idx_ff]: "ff" };
+  const fn: Record<number, string> = {
+    [idx_gf]: "General Fund", [idx_sf]: "Special Fund", [idx_ff]: "Federal Fund",
+  };
+
+  const src: number[] = [], tgt: number[] = [], val: number[] = [], lc: string[] = [], ll: string[] = [];
+
+  // Revenue -> Fund, scaled to agency's share of each fund
+  ov.revRows.forEach((r, i) => {
+    [idx_gf, idx_sf, idx_ff].forEach(fi => {
+      const rawRevV = r[fkey[fi]];
+      const totalFund = fundTotals[fkey[fi]];
+      if (rawRevV <= 0 || totalFund <= 0) return;
+      const agFundShare = fundToAg[fi];
+      if (agFundShare <= 0) return;
+      const scaled = Math.floor((rawRevV * agFundShare) / totalFund);
+      if (scaled > 500_000) {
+        src.push(i); tgt.push(fi); val.push(scaled);
+        lc.push(h2r(FUND_COLORS[fn[fi]].replace("#", ""), "55"));
+        ll.push(`$${(scaled / 1e9).toFixed(3)}B  ${r.category} → ${fn[fi]}`);
+      }
+    });
+  });
+
+  // Fund -> Agency
+  [idx_gf, idx_sf, idx_ff].forEach(fi => {
+    const v = fundToAg[fi];
+    if (v > 0) {
+      src.push(fi); tgt.push(idx_ag); val.push(v);
+      lc.push(h2r("0A0A0A", "55"));
+      ll.push(`$${(v / 1e9).toFixed(3)}B  ${fn[fi]} → ${agency}`);
+    }
+  });
+
+  // Agency -> Programs (rescale so total matches agency total)
+  const progTotal = progs.total;
+  const scale = progTotal > 0 ? agencyTotal / progTotal : 1;
+  progs.names.forEach((pname, pi) => {
+    const scaledP = Math.floor(progs.vals[pi] * scale);
+    src.push(idx_ag); tgt.push(prog_start + pi); val.push(scaledP);
+    lc.push(h2r(PROG_PALETTE[pi % PROG_PALETTE.length].replace("#", ""), "88"));
+    ll.push(`$${(scaledP / 1e9).toFixed(3)}B  ${agency} → ${pname}`);
+  });
+
+  return { labels, colors, src, tgt, val, lc, ll, prog_count: N_prog };
+}
+
+/* ── HTML template (drill-down enabled) ─────────────────────── */
 const HTML_TEMPLATE = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"><\/script>
@@ -278,17 +321,25 @@ body{background:#fff}
 .yr-btn{border:1.5px solid #ddd;background:white;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600;transition:all .15s}
 .yr-btn.active{background:#1D4F91;color:white;border-color:#1D4F91}
 .mode-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:#555;letter-spacing:1px;margin-left:16px}
+.back-btn{border:1.5px solid #C41230;background:#fff;color:#C41230;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:700;display:none;margin-left:10px}
+.back-btn.show{display:inline-block}
+.back-btn:hover{background:#C41230;color:#fff}
 .layout{display:flex;height:900px}
 .chart-area{flex:1;min-width:0}
 .right-panel{width:260px;border-left:1px solid #ddd;display:flex;flex-direction:column;background:#FAFAFA;overflow:hidden}
-.panel-top{padding:10px;border-bottom:1px solid #eee;overflow-y:auto;max-height:900px}
+.panel-top{padding:10px;border-bottom:1px solid #eee}
 .panel-lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#999;margin-bottom:8px}
-.chip-list{display:flex;flex-direction:column;gap:4px}
-.chip{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;cursor:default;padding:7px 9px;font-size:11.5px;border-radius:4px;border:1px solid #ddd;background:white;color:#1a1a1a;line-height:1.3;font-family:Georgia,serif}
+.chip-list{display:flex;flex-direction:column;gap:4px;overflow-y:auto;max-height:860px}
+.chip{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;cursor:pointer;padding:7px 9px;font-size:11.5px;border-radius:4px;border:1px solid #ddd;background:white;transition:all .12s;color:#1a1a1a;line-height:1.3;font-family:Georgia,serif}
+.chip:hover{background:#EFF6FF;border-color:#1D4F91;color:#1D4F91}
+.chip.active-chip{background:#1D4F91;color:white;border-color:#1D4F91;font-weight:700}
+.chip-count{font-size:10px;color:#999;font-weight:400;background:#f0f0f0;padding:1px 6px;border-radius:10px;white-space:nowrap}
+.chip.active-chip .chip-count{background:rgba(255,255,255,0.25);color:rgba(255,255,255,0.9)}
 .hint{padding:8px 14px;font-size:11px;color:#888;font-style:italic;border-top:1px solid #eee}
 </style></head><body>
 <div class="ctrl">
-  <span class="mode-tag" id="mode-label">OVERVIEW</span>
+  <span class="mode-tag" id="mode-label">OVERVIEW MODE</span>
+  <button class="back-btn" id="back-btn" onclick="resetOverview()">&larr; Back to Overview</button>
   <div style="margin-left:auto;display:flex;gap:8px">
     <button class="yr-btn" id="btn-2025" onclick="setYear('2025')">FY2025</button>
     <button class="yr-btn active" id="btn-2026" onclick="setYear('2026')">FY2026</button>
@@ -299,48 +350,104 @@ body{background:#fff}
   <div class="chart-area" id="sankey-chart"></div>
   <div class="right-panel">
     <div class="panel-top">
-      <div class="panel-lbl">Agencies</div>
+      <div class="panel-lbl" id="panel-title">Click agency to drill in</div>
       <div class="chip-list" id="chip-list"></div>
     </div>
   </div>
 </div>
-<div class="hint">Revenue sources flow through fund types into agencies. Toggle fiscal years above.</div>
+<div class="hint" id="hint">Click any agency (chip at right, or Sankey node) to see Revenue → Fund → Agency → Programs.</div>
 <script>
 const DATA = JSON.parse('__DATA__');
 let yr = '2026';
+let mode = 'overview';
+let selectedAgency = null;
+
 function buildChips(){
   const box = document.getElementById('chip-list');
   box.innerHTML = '';
   const agencies = DATA[yr].overview.agencies;
+  const drills = DATA[yr].drilldown;
   agencies.forEach(name => {
-    const btn = document.createElement('div');
-    btn.className = 'chip';
-    btn.textContent = name;
+    const d = drills[name];
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (selectedAgency === name ? ' active-chip' : '');
+    const count = d ? d.prog_count : 0;
+    btn.innerHTML = '<span>'+name+'</span><span class="chip-count">'+(count ? count+' prog' : '—')+'</span>';
+    btn.onclick = () => { if (d) selectAgency(name); };
+    if (!d) btn.style.opacity = '0.45';
     box.appendChild(btn);
   });
 }
-function renderChart(){
-  const d = DATA[yr].overview;
-  const title = 'Maryland Budget Flow: Revenue → Fund Types → Agencies &nbsp; <span style="font-size:11px;color:#888">' + DATA[yr].label + '<\/span>';
-  Plotly.newPlot('sankey-chart', [{
-    type:'sankey', arrangement:'perpendicular',
-    node:{ pad:14, thickness:20, line:{color:'#555',width:0.4}, label:d.labels, color:d.colors, hovertemplate:'<b>%{label}<\/b><br>$%{value:,.0f}<extra><\/extra>' },
-    link:{ source:d.src, target:d.tgt, value:d.val, color:d.lc, label:d.ll, hovertemplate:'%{label}<extra><\/extra>' }
-  }], {
-    title:{text:title, x:0.02, xanchor:'left', font:{size:13,color:'#121212',family:'Georgia,serif'}},
-    paper_bgcolor:'#fff', plot_bgcolor:'#fff',
-    font:{color:'#333',size:11,family:'Georgia,serif'},
-    height:900, margin:{t:50,l:6,r:6,b:16}
-  }, {responsive:true, displayModeBar:true, modeBarButtonsToRemove:['select2d','lasso2d'], displaylogo:false});
+
+function selectAgency(name){
+  selectedAgency = name;
+  mode = 'drilldown';
+  document.getElementById('mode-label').textContent = 'DRILL-DOWN: ' + name.toUpperCase();
+  document.getElementById('back-btn').classList.add('show');
+  document.getElementById('panel-title').textContent = 'Viewing: ' + name;
+  document.getElementById('hint').textContent = 'Revenue → Fund Type → ' + name + ' → Top programs. Click “Back” to return.';
+  renderChart();
+  buildChips();
 }
+
+function resetOverview(){
+  mode = 'overview';
+  selectedAgency = null;
+  document.getElementById('mode-label').textContent = 'OVERVIEW MODE';
+  document.getElementById('back-btn').classList.remove('show');
+  document.getElementById('panel-title').textContent = 'Click agency to drill in';
+  document.getElementById('hint').textContent = 'Click any agency (chip at right, or Sankey node) to see Revenue → Fund → Agency → Programs.';
+  renderChart();
+  buildChips();
+}
+
+function makeSankeySpec(d, title){
+  return {
+    data: [{
+      type:'sankey', arrangement:'perpendicular',
+      node:{ pad:14, thickness:20, line:{color:'#555',width:0.4}, label:d.labels, color:d.colors, hovertemplate:'<b>%{label}<\/b><br>$%{value:,.0f}<extra><\/extra>' },
+      link:{ source:d.src, target:d.tgt, value:d.val, color:d.lc, label:d.ll, hovertemplate:'%{label}<extra><\/extra>' }
+    }],
+    layout:{
+      title:{text:'<b>'+title+'<\/b>  <span style="font-size:11px;color:#888">'+DATA[yr].label+'<\/span>', x:0.02, xanchor:'left', font:{size:13,color:'#121212',family:'Georgia,serif'}},
+      paper_bgcolor:'#fff', plot_bgcolor:'#fff',
+      font:{color:'#333',size:11,family:'Georgia,serif'},
+      height:900, margin:{t:50,l:6,r:6,b:16}
+    },
+    config:{responsive:true,displayModeBar:true,modeBarButtonsToRemove:['select2d','lasso2d'],displaylogo:false}
+  };
+}
+
+function renderChart(){
+  let spec;
+  if (mode === 'overview'){
+    spec = makeSankeySpec(DATA[yr].overview, 'Maryland Budget Flow — Revenue → Fund Types → Agencies');
+  } else {
+    const dd = DATA[yr].drilldown[selectedAgency];
+    spec = makeSankeySpec(dd, 'Revenue → Fund Types → ' + selectedAgency + ' → Programs');
+  }
+  Plotly.newPlot('sankey-chart', spec.data, spec.layout, spec.config).then(gd => {
+    gd.on('plotly_click', ev => {
+      if (!ev.points || !ev.points[0]) return;
+      const lbl = ev.points[0].label;
+      if (mode === 'overview' && lbl && DATA[yr].drilldown[lbl]){
+        selectAgency(lbl);
+      }
+    });
+  });
+}
+
 function setYear(y){
   yr = y;
   document.getElementById('btn-2025').className = 'yr-btn'+(y==='2025'?' active':'');
   document.getElementById('btn-2026').className = 'yr-btn'+(y==='2026'?' active':'');
   document.getElementById('btn-2027').className = 'yr-btn'+(y==='2027'?' active':'');
-  renderChart(); buildChips();
+  if (mode === 'drilldown' && !DATA[yr].drilldown[selectedAgency]) resetOverview();
+  else { renderChart(); buildChips(); }
 }
-renderChart(); buildChips();
+
+renderChart();
+buildChips();
 <\/script></body></html>`;
 
 export default function SankeyChart() {
@@ -351,7 +458,8 @@ export default function SankeyChart() {
     Promise.all([
       fetch("/sankey_revenue.csv").then(r => r.text()),
       fetch("/sankey_agency.csv").then(r => r.text()),
-    ]).then(([revText, agenText]) => {
+      fetch("/sankey_drilldowns.json").then(r => r.json()).catch(() => ({} as ProgDrilldowns)),
+    ]).then(([revText, agenText, drills]) => {
       const dfRev = parseCsv<RevRow>(revText);
       const dfAgen = parseCsv<AgenRow>(agenText);
 
@@ -359,13 +467,19 @@ export default function SankeyChart() {
       for (const yr of [2025, 2026, 2027]) {
         const ov = buildOverview(yr, dfRev, dfAgen);
         const tot = BUDGET_TOTALS[yr] / 1e9;
+        const yearDrills: Record<string, SankeySpec> = {};
+        for (const ag of ov.agencies) {
+          const dd = buildDrilldown(yr, ag, ov, drills as ProgDrilldowns);
+          if (dd) yearDrills[ag] = dd;
+        }
         allData[String(yr)] = {
-          label: `FY${yr} $${tot.toFixed(2)}B`,
+          label: `FY${yr}${yr === 2027 ? " (est.)" : ""} · $${tot.toFixed(2)}B`,
           overview: {
             labels: ov.labels, colors: ov.colors,
             src: ov.src, tgt: ov.tgt, val: ov.val, lc: ov.lc, ll: ov.ll,
             agencies: ov.agencies,
           },
+          drilldown: yearDrills,
         };
       }
 

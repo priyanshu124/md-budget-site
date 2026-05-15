@@ -51,8 +51,8 @@ const SLIDES: Slide[] = [
   {
     title: "Budget Flow: Revenue to Agency",
     insight:
-      "Maryland's $70.8B FY2027 budget flows from 6 revenue streams through 3 fund types into 30+ agencies. Federal grants alone account for $17.7B, the largest single source.",
-    source: "MD DBM Sankey_Data.xlsx — FY2025 / FY2026 / FY2027 revenue → fund type → agency",
+      "Maryland's budget flows from 6 revenue streams through 3 types of funds into 30+ agencies.",
+    source: "",
     citations: [
       { label: "FY2027 Budget Highlights · pp.17–24 — Revenue by Fund Type & Agency Allocations", url: "https://dbm.maryland.gov/budget/Documents/operbudget/2027/proposed/FY2027MarylandStateBudgetHighlights.pdf#page=17" },
     ],
@@ -63,9 +63,9 @@ const SLIDES: Slide[] = [
     title: "Dept. of Commerce: $27.5M Cut",
     insight:
       "The largest percentage reduction among major agencies. Economic Development took the biggest hit at −$15M, followed by Supplemental No. 1 Programs at −$4.3M. The combined cut totals $27.69M across six program areas. Regular Budget Cut $23.2M + Supplemental No.1 $4.3M.",
-    source: "JCR 2025  |  p.265 — Dept. of Commerce budget analysis (PDF p.365)",
+    source: "JCR 2025  |  p.34 — Dept. of Commerce budget analysis",
     citations: [
-      { label: "Joint Chairmen’s Report 2025 · p.265 — Dept. of Commerce budget analysis (T00)", url: "https://dls.maryland.gov/pubs/prod/RecurRpt/Joint-Chairmens-Report_2025.pdf#page=365" },
+      { label: "Joint Chairmen’s Report 2025 · p.34 — Dept. of Commerce budget analysis (T00)", url: "https://dls.maryland.gov/pubs/prod/RecurRpt/Joint-Chairmens-Report_2025.pdf#page=34" },
     ],
     viz: <JcrCommerceChart />,
     accentColor: "#C41230",
@@ -84,7 +84,7 @@ const SLIDES: Slide[] = [
   {
     title: "Spending Is Growing 4× Faster Than Revenue",
     insight:
-      "Post-ARPA: expenditures +$2.5B/yr vs. revenue +$0.6B/yr; the gap is projected to exceed -$5B by FY2030. Expenditure overtook revenue in FY2025, creating the widest structural gap since ARPA funds ended.",
+      "Post-ARPA: expenditures growing $3.8B/yr vs. revenue growing $1.2B/yr, three times faster. Expenditure overtook revenue in FY2025 and the structural gap reaches -$19.7B by FY2030 if current trends hold.",
     source: "ACFR 2025  ·  Statistical Section  ·  pp.231–233 (PDF p.247)  |  Changes in Fund Balances, Governmental Funds, Last Ten Fiscal Years (audited)  |  Projection: FY2023–2025 slope extended to FY2030",
     citations: [
       { label: "ACFR 2025 · Statistical Section · pp.231–233 — Changes in Fund Balances, Governmental Funds, Last Ten Fiscal Years (audited)", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/md/reports/financial/2025-acfr-accessible.pdf#page=247" },
