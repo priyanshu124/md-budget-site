@@ -4,12 +4,21 @@
     import { onMount } from 'svelte';
     import { page } from '$app/stores';
     import { base } from '$app/paths';
+    import { beforeNavigate } from '$app/navigation';
     import { EvidenceDefaultLayout } from '@evidence-dev/core-components';
     import { showQueries } from '@evidence-dev/component-utilities/stores';
     export let data;
 
+    beforeNavigate(({ to, cancel }) => {
+        if (to?.url && to.url.pathname !== $page.url.pathname) {
+            cancel();
+            window.location.href = to.url.href;
+        }
+    });
+
     onMount(() => {
         showQueries.set(false);
+        document.title = 'Maryland Budget Intel Tool';
         document.querySelectorAll('link[rel="icon"][href*="/deep-dive/"], link[rel="apple-touch-icon"][href*="/deep-dive/"]').forEach(el => el.remove());
     });
 
@@ -22,6 +31,7 @@
 </script>
 
 <svelte:head>
+    <title>Maryland Budget Intel Tool</title>
     <link rel="icon" href="/favicon.ico" />
     <link rel="stylesheet" href="{base}/custom.css"/>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -107,9 +117,7 @@
         left: 0;
         right: 0;
         z-index: 1000;
-        background: rgba(255,255,255,0.97);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: #ffffff;
         border-bottom: 1px solid var(--line);
         box-shadow: 0 1px 6px rgba(78,19,75,0.06);
     }
