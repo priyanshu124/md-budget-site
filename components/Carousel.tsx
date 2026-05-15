@@ -62,9 +62,9 @@ const SLIDES: Slide[] = [
     title: "Dept. of Commerce: $27.5M Cut",
     insight:
       "The largest percentage reduction among major agencies. Economic Development took the biggest hit at −$15M, followed by Supplemental No. 1 Programs at −$4.3M. The combined cut totals $27.69M across six program areas. Regular Budget Cut $23.2M + Supplemental No.1 $4.3M.",
-    source: "JCR 2025  |  p.265 — Dept. of Commerce budget analysis (PDF p.365)",
+    source: "JCR 2025  |  p.34 — Dept. of Commerce budget analysis",
     citations: [
-      { label: "Joint Chairmen’s Report 2025 · p.265 — Dept. of Commerce budget analysis (T00)", url: "https://dls.maryland.gov/pubs/prod/RecurRpt/Joint-Chairmens-Report_2025.pdf#page=365" },
+      { label: "Joint Chairmen’s Report 2025 · p.34 — Dept. of Commerce budget analysis (T00)", url: "https://dls.maryland.gov/pubs/prod/RecurRpt/Joint-Chairmens-Report_2025.pdf#page=34" },
     ],
     viz: <JcrCommerceChart />,
     accentColor: "#C41230",
@@ -215,11 +215,39 @@ function CitationBlock({ citations }: { citations: CitationLink[] }) {
 
 export default function Carousel() {
   const [current, setCurrent] = useState(0);
+  const [stripHeight, setStripHeight] = useState<number | undefined>(undefined);
   const scrollRef  = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const dragStart  = useRef(0);
   const scrollStart = useRef(0);
   const isScrolling = useRef(false);
+
+  /* ── Resize the strip to match only the current slide ───────
+     The carousel is a flex row, so by default every slide stretches to
+     the tallest slide's height. That leaves dead whitespace below shorter
+     slides. We measure the active slide and pin the strip to that height. */
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root) return;
+    const slide = root.children[current] as HTMLElement | undefined;
+    if (!slide) return;
+    const inner = slide.firstElementChild as HTMLElement | null;
+    const measure = () => {
+      const h = inner ? inner.offsetHeight : slide.offsetHeight;
+      if (h > 0) setStripHeight(h);
+    };
+    measure();
+    // Re-measure if content reflows (Plotly mounts, iframe content arrives, viewport changes)
+    const ro = new ResizeObserver(measure);
+    if (inner) ro.observe(inner);
+    window.addEventListener("resize", measure);
+    const t = setTimeout(measure, 400);  // catch late-mount charts
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      clearTimeout(t);
+    };
+  }, [current]);
 
   /* ── programmatic scroll-to ──────────────────────────────── */
   const scrollTo = useCallback((index: number) => {
@@ -425,11 +453,14 @@ export default function Carousel() {
         onMouseLeave={onMouseUp}
         style={{
           display: "flex",
+          alignItems: "flex-start",
           overflowX: "auto",
           scrollSnapType: "x mandatory",
           scrollBehavior: "smooth",
           cursor: "grab",
           WebkitOverflowScrolling: "touch",
+          height: stripHeight,
+          transition: "height 0.25s ease",
         } as React.CSSProperties}
       >
         {SLIDES.map((s, i) => (
