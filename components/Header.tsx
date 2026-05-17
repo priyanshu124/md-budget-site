@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   { label: "Home",         href: "/" },
-  { label: "Deep-Dive",    href: "/deep-dive/budget-office" },
+  { label: "Deep-Dive",    href: "https://deep-dive-stage-budget.netlify.app/" },
   { label: "Methodology",  href: "/methodology" },
   { label: "Guardrails",   href: "/guardrails" },
 ];
@@ -72,36 +72,49 @@ export default function Header() {
 
         <nav style={{ display: "flex", gap: 2, marginLeft: 24 }}>
           {NAV.map((item) => {
-            const active = path === item.href || (item.href !== "/" && path.startsWith(item.href)) || (item.href.startsWith("/deep-dive") && path.startsWith("/deep-dive"));
-            return (
-              <Link
+            const isExternal = item.href.startsWith("http");
+            const active = !isExternal && (path === item.href || (item.href !== "/" && path.startsWith(item.href)) || (item.href.startsWith("/deep-dive") && path.startsWith("/deep-dive")));
+            const commonStyle = {
+              fontSize: 13,
+              fontWeight: 600,
+              color: active ? "var(--nxt-deep)" : "var(--text-mute)",
+              textDecoration: "none",
+              padding: "7px 14px",
+              borderRadius: 8,
+              background: active ? "var(--nxt-pink)" : "transparent",
+              borderBottom: active ? "2px solid var(--nxt-purple)" : "2px solid transparent",
+              transition: "all 0.18s",
+              whiteSpace: "nowrap",
+            } as const;
+
+            const hoverHandlers = {
+              onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>) => {
+                if (!active) {
+                  e.currentTarget.style.color = "var(--nxt-purple)";
+                  e.currentTarget.style.background = "var(--nxt-lavender)";
+                }
+              },
+              onMouseLeave: (e: React.MouseEvent<HTMLAnchorElement>) => {
+                if (!active) {
+                  e.currentTarget.style.color = "var(--text-mute)";
+                  e.currentTarget.style.background = "transparent";
+                }
+              },
+            };
+
+            return isExternal ? (
+              <a
                 key={item.href}
                 href={item.href}
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: active ? "var(--nxt-deep)" : "var(--text-mute)",
-                  textDecoration: "none",
-                  padding: "7px 14px",
-                  borderRadius: 8,
-                  background: active ? "var(--nxt-pink)" : "transparent",
-                  borderBottom: active ? "2px solid var(--nxt-purple)" : "2px solid transparent",
-                  transition: "all 0.18s",
-                  whiteSpace: "nowrap",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLAnchorElement).style.color = "var(--nxt-purple)";
-                    (e.currentTarget as HTMLAnchorElement).style.background = "var(--nxt-lavender)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-mute)";
-                    (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
-                  }
-                }}
+                target="_blank"
+                rel="noreferrer"
+                style={commonStyle}
+                {...hoverHandlers}
               >
+                {item.label}
+              </a>
+            ) : (
+              <Link key={item.href} href={item.href} style={commonStyle} {...hoverHandlers}>
                 {item.label}
               </Link>
             );

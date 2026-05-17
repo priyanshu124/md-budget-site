@@ -1,15 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
+  async redirects() {
     return [
       {
-        source: "/deep-dive",
-        destination: "/deep-dive/budget-office/index.html",
-      },
-      {
         source: "/deep-dive/:path*",
-        destination: "/deep-dive/:path*/index.html",
+        destination: "https://deep-dive-stage-budget.netlify.app/",
+        permanent: false,
       },
     ];
   },
